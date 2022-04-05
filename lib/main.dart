@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,22 +34,28 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  File? image;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  Future picImage(ImageSource source) async {
+    try {
+      final image = await ImagePicker().pickImage(source: source);
+      if (image == null) {
+        return;
+      }
+
+      final imagePath = File(image.path);
+      setState(() {
+        this.image = imagePath;
+      });
+    } on PlatformException catch (e) {
+      print(e);
+      print('Failed to open camera');
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       drawer: Drawer(
         child: ListView(
@@ -84,62 +93,79 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       appBar: AppBar(
-        title: Text('My App'),
+        title: const Text('My App'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.camera,
               color: Colors.white,
             ),
             onPressed: () {
-              showDialog(context: context, builder: (context)=> AlertDialog(
-                title: Text("Choose option",style: TextStyle(color: Colors.blue),),
-                content: SingleChildScrollView(
-                  child: ListBody(
-                    children: [
-                      Divider(height: 1,color: Colors.blue,),
-                      ListTile(
-                        onTap: (){
-
-                        },
-                        title: Text("Gallery"),
-                        leading: Icon(Icons.account_box,color: Colors.blue,),
-                      ),
-
-                      Divider(height: 1,color: Colors.blue,),
-                      ListTile(
-                        onTap: (){
-
-                        },
-                        title: Text("Camera"),
-                        leading: Icon(Icons.camera,color: Colors.blue,),
-                      ),
-                    ],
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text(
+                    "Choose option",
+                    style: TextStyle(color: Colors.blue),
                   ),
-                ),),
+                  content: SingleChildScrollView(
+                    child: ListBody(
+                      children: [
+                        const Divider(
+                          height: 1,
+                          color: Colors.blue,
+                        ),
+                        ListTile(
+                          onTap: () async {
+                            await picImage(ImageSource.gallery);
+                            Navigator.pop(context);
+                          },
+                          title: const Text("Gallery"),
+                          leading: const Icon(
+                            Icons.account_box,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const Divider(
+                          height: 1,
+                          color: Colors.blue,
+                        ),
+                        ListTile(
+                          onTap: () async {
+                            await picImage(ImageSource.camera);
+                            Navigator.pop(context);
+                          },
+                          title: const Text("Camera"),
+                          leading: const Icon(
+                            Icons.camera,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               );
             },
           )
         ],
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+          children: [
+            // const Spacer(),
+            image != null
+                ? Image.file(image!)
+                : Container(
+                    color: Colors.red,
+                  ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: () {
+          //todo : add func to the increment button
+        },
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
